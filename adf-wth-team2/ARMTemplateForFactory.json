@@ -375,6 +375,30 @@
 											}
 										}
 									]
+								},
+								{
+									"value": "CosmosDB",
+									"activities": [
+										{
+											"name": "LoadCosmosDB",
+											"type": "ExecutePipeline",
+											"dependsOn": [],
+											"userProperties": [],
+											"typeProperties": {
+												"pipeline": {
+													"referenceName": "pipeline_Load_Cosmos_copy1",
+													"type": "PipelineReference"
+												},
+												"waitOnCompletion": true,
+												"parameters": {
+													"TableList": {
+														"value": "@activity('Lookup').output.value",
+														"type": "Expression"
+													}
+												}
+											}
+										}
+									]
 								}
 							],
 							"defaultActivities": [
@@ -404,7 +428,8 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/DS_SQLAzure')]",
 				"[concat(variables('factoryId'), '/pipelines/Pipeline_Load_SqlAzure')]",
-				"[concat(variables('factoryId'), '/pipelines/Pipeline_Load_SqlVM')]"
+				"[concat(variables('factoryId'), '/pipelines/Pipeline_Load_SqlVM')]",
+				"[concat(variables('factoryId'), '/pipelines/pipeline_Load_Cosmos_copy1')]"
 			]
 		},
 		{
@@ -1351,6 +1376,104 @@
 					],
 					"script": "source(output(\n\t\tcountryname as string,\n\t\tcountrycode as string,\n\t\tdate as string,\n\t\tc1_school_closing as string,\n\t\tc1_flag as boolean,\n\t\tc2_workplace_closing as string,\n\t\tc2_flag as boolean,\n\t\tc3_cancel_public_events as string,\n\t\tc3_flag as boolean,\n\t\tc4_restrictions_on_gatherings as string,\n\t\tc4_flag as boolean,\n\t\tc5_close_public_transport as string,\n\t\tc5_flag as boolean,\n\t\tc6_stay_at_home_requirements as string,\n\t\tc6_flag as boolean,\n\t\tc7_restrictions_on_internal_movement as string,\n\t\tc7_flag as boolean,\n\t\tc8_international_travel_controls as string,\n\t\te1_income_support as string,\n\t\te1_flag as boolean,\n\t\t{e2_debt/contract_relief} as string,\n\t\te3_fiscal_measures as string,\n\t\te4_international_support as string,\n\t\th1_public_information_campaigns as string,\n\t\th1_flag as boolean,\n\t\th2_testing_policy as string,\n\t\th3_contact_tracing as string,\n\t\th4_emergency_investment_in_healthcare as string,\n\t\th5_investment_in_vaccines as string,\n\t\tm1_wildcard as string,\n\t\tconfirmedcases as string,\n\t\tconfirmeddeaths as string,\n\t\tstringencyindex as string,\n\t\tstringencyindexfordisplay as string,\n\t\tlegacystringencyindex as string,\n\t\tlegacystringencyindexfordisplay as string,\n\t\tiso_country as string,\n\t\tload_date as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'document') ~> cosmosdb\ncosmosdb derive(SourceSystem = 'CosmosDB') ~> SourceSystem\nSourceSystem sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tpartitionFileNames:['covid19cosmosdb'],\n\tpartitionBy('hash', 1),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> datalake"
 				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_cosmosdb')]",
+				"[concat(variables('factoryId'), '/datasets/ds_datalake_json')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pipeline_Load_Cosmos_copy1')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ForEach1",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@pipeline().parameters.TableList",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "copy cosmosbd",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "CosmosDbSqlApiSource",
+											"additionalColumns": [
+												{
+													"name": "Sourcesystem",
+													"value": {
+														"value": "@item().Name",
+														"type": "Expression"
+													}
+												}
+											],
+											"preferredRegions": []
+										},
+										"sink": {
+											"type": "JsonSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "JsonWriteSettings"
+											}
+										},
+										"enableStaging": false,
+										"validateDataConsistency": false
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_cosmosdb",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_datalake_json",
+											"type": "DatasetReference",
+											"parameters": {
+												"Containername": {
+													"value": "@item().ContainerName",
+													"type": "Expression"
+												},
+												"foldername": {
+													"value": "@item().FolderName",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"parameters": {
+					"TableList": {
+						"type": "array"
+					}
+				},
+				"folder": {
+					"name": "wth-team2"
+				},
+				"annotations": []
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ds_cosmosdb')]",

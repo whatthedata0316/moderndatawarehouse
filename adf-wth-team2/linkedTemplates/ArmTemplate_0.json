@@ -1035,6 +1035,104 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/pipeline_Load_Cosmos_copy1')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ForEach1",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@pipeline().parameters.TableList",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "copy cosmosbd",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "CosmosDbSqlApiSource",
+											"additionalColumns": [
+												{
+													"name": "Sourcesystem",
+													"value": {
+														"value": "@item().Name",
+														"type": "Expression"
+													}
+												}
+											],
+											"preferredRegions": []
+										},
+										"sink": {
+											"type": "JsonSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "JsonWriteSettings"
+											}
+										},
+										"enableStaging": false,
+										"validateDataConsistency": false
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_cosmosdb",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_datalake_json",
+											"type": "DatasetReference",
+											"parameters": {
+												"Containername": {
+													"value": "@item().ContainerName",
+													"type": "Expression"
+												},
+												"foldername": {
+													"value": "@item().FolderName",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"parameters": {
+					"TableList": {
+						"type": "array"
+					}
+				},
+				"folder": {
+					"name": "wth-team2"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_cosmosdb')]",
+				"[concat(variables('factoryId'), '/datasets/ds_datalake_json')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/Pipeline_Load_SqlVM')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -1325,6 +1423,30 @@
 											}
 										}
 									]
+								},
+								{
+									"value": "CosmosDB",
+									"activities": [
+										{
+											"name": "LoadCosmosDB",
+											"type": "ExecutePipeline",
+											"dependsOn": [],
+											"userProperties": [],
+											"typeProperties": {
+												"pipeline": {
+													"referenceName": "pipeline_Load_Cosmos_copy1",
+													"type": "PipelineReference"
+												},
+												"waitOnCompletion": true,
+												"parameters": {
+													"TableList": {
+														"value": "@activity('Lookup').output.value",
+														"type": "Expression"
+													}
+												}
+											}
+										}
+									]
 								}
 							],
 							"defaultActivities": [
@@ -1354,7 +1476,8 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/DS_SQLAzure')]",
 				"[concat(variables('factoryId'), '/pipelines/Pipeline_Load_SqlAzure')]",
-				"[concat(variables('factoryId'), '/pipelines/Pipeline_Load_SqlVM')]"
+				"[concat(variables('factoryId'), '/pipelines/Pipeline_Load_SqlVM')]",
+				"[concat(variables('factoryId'), '/pipelines/pipeline_Load_Cosmos_copy1')]"
 			]
 		}
 	]
