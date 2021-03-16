@@ -42,8 +42,8 @@
 				}
 			},
 			{
-				"name": "Execute Pipeline",
-				"type": "ExecutePipeline",
+				"name": "Switch1",
+				"type": "Switch",
 				"dependsOn": [
 					{
 						"activity": "Lookup",
@@ -54,17 +54,60 @@
 				],
 				"userProperties": [],
 				"typeProperties": {
-					"pipeline": {
-						"referenceName": "Pipeline_Load_SqlAzure",
-						"type": "PipelineReference"
+					"on": {
+						"value": "@activity('Lookup').output.Name",
+						"type": "Expression"
 					},
-					"waitOnCompletion": true,
-					"parameters": {
-						"TableList": {
-							"value": "@activity('Lookup').output.value",
-							"type": "Expression"
+					"cases": [
+						{
+							"value": "SqlAzure",
+							"activities": [
+								{
+									"name": "Execute SQLAzure Pipeline",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "Pipeline_Load_SqlAzure",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"TableList": {
+												"value": "@activity('Lookup').output.value",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							]
+						},
+						{
+							"value": "SqlVM",
+							"activities": [
+								{
+									"name": "Execute SQLVM Pipeline",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "Pipeline_Load_SqlVM",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"TableList": {
+												"value": "@activity('Lookup').output.value",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							]
 						}
-					}
+					]
 				}
 			}
 		],
