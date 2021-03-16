@@ -1,0 +1,11 @@
+{
+	"name": "LS_SQLAzure",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureSqlDatabase",
+		"typeProperties": {
+			"connectionString": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=covid19-sqlserver-yjqwgbkvikf6e.database.windows.net;Initial Catalog=covid19"
+		}
+	}
+}
