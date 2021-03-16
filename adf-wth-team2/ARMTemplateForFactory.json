@@ -182,6 +182,15 @@
 									"typeProperties": {
 										"source": {
 											"type": "SqlServerSource",
+											"additionalColumns": [
+												{
+													"name": "SourceSystem",
+													"value": {
+														"value": "@item().Name",
+														"type": "Expression"
+													}
+												}
+											],
 											"queryTimeout": "02:00:00",
 											"partitionOption": "None"
 										},
