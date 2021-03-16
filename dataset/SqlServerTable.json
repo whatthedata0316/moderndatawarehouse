@@ -5,6 +5,14 @@
 			"referenceName": "LS_SqlServer",
 			"type": "LinkedServiceReference"
 		},
+		"parameters": {
+			"SchemaName": {
+				"type": "string"
+			},
+			"TableName": {
+				"type": "string"
+			}
+		},
 		"folder": {
 			"name": "wth-team2"
 		},
