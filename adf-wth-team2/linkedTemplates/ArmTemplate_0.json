@@ -1259,7 +1259,7 @@
 						"userProperties": [],
 						"typeProperties": {
 							"on": {
-								"value": "@activity('Lookup').output.Name",
+								"value": "@pipeline().parameters.Name",
 								"type": "Expression"
 							},
 							"cases": [
