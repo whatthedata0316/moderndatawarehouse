@@ -320,6 +320,47 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/ds_datalake_json')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_AzureDataLakeStorage",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"Containername": {
+						"type": "string"
+					},
+					"foldername": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "wth-team2"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "@dataset().foldername",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().Containername",
+							"type": "Expression"
+						}
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_AzureDataLakeStorage')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/LS_SqlServer')]",
 			"type": "Microsoft.DataFactory/factories/linkedServices",
 			"apiVersion": "2018-06-01",
@@ -468,18 +509,405 @@
 						"typeProperties": {
 							"source": {
 								"type": "CosmosDbSqlApiSource",
+								"additionalColumns": [
+									{
+										"name": "Sourcesystem",
+										"value": "cosmosdb"
+									}
+								],
 								"preferredRegions": []
 							},
 							"sink": {
-								"type": "ParquetSink",
+								"type": "JsonSink",
 								"storeSettings": {
 									"type": "AzureBlobFSWriteSettings"
 								},
 								"formatSettings": {
-									"type": "ParquetWriteSettings"
+									"type": "JsonWriteSettings"
 								}
 							},
-							"enableStaging": false
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"path": "$['countryname']"
+										},
+										"sink": {
+											"name": "countryname",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['countrycode']"
+										},
+										"sink": {
+											"name": "countrycode",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['date']"
+										},
+										"sink": {
+											"name": "date",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"path": "$['c1_school_closing']"
+										},
+										"sink": {
+											"name": "c1_school_closing",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['c1_flag']"
+										},
+										"sink": {
+											"name": "c1_flag",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['c2_workplace_closing']"
+										},
+										"sink": {
+											"name": "c2_workplace_closing",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['c2_flag']"
+										},
+										"sink": {
+											"name": "c2_flag",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['c3_cancel_public_events']"
+										},
+										"sink": {
+											"name": "c3_cancel_public_events",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['c3_flag']"
+										},
+										"sink": {
+											"name": "c3_flag",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['c4_restrictions_on_gatherings']"
+										},
+										"sink": {
+											"name": "c4_restrictions_on_gatherings",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['c4_flag']"
+										},
+										"sink": {
+											"name": "c4_flag",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['c5_close_public_transport']"
+										},
+										"sink": {
+											"name": "c5_close_public_transport",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['c5_flag']"
+										},
+										"sink": {
+											"name": "c5_flag",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['c6_stay_at_home_requirements']"
+										},
+										"sink": {
+											"name": "c6_stay_at_home_requirements",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['c6_flag']"
+										},
+										"sink": {
+											"name": "c6_flag",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['c7_restrictions_on_internal_movement']"
+										},
+										"sink": {
+											"name": "c7_restrictions_on_internal_movement",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['c7_flag']"
+										},
+										"sink": {
+											"name": "c7_flag",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['c8_international_travel_controls']"
+										},
+										"sink": {
+											"name": "c8_international_travel_controls",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['e1_income_support']"
+										},
+										"sink": {
+											"name": "e1_income_support",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['e1_flag']"
+										},
+										"sink": {
+											"name": "e1_flag",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['e2_debt/contract_relief']"
+										},
+										"sink": {
+											"name": "e2_debt/contract_relief",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['e3_fiscal_measures']"
+										},
+										"sink": {
+											"name": "e3_fiscal_measures",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['e4_international_support']"
+										},
+										"sink": {
+											"name": "e4_international_support",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['h1_public_information_campaigns']"
+										},
+										"sink": {
+											"name": "h1_public_information_campaigns",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['h1_flag']"
+										},
+										"sink": {
+											"name": "h1_flag"
+										}
+									},
+									{
+										"source": {
+											"path": "$['h2_testing_policy']"
+										},
+										"sink": {
+											"name": "h2_testing_policy"
+										}
+									},
+									{
+										"source": {
+											"path": "$['h3_contact_tracing']"
+										},
+										"sink": {
+											"name": "h3_contact_tracing"
+										}
+									},
+									{
+										"source": {
+											"path": "$['h4_emergency_investment_in_healthcare']"
+										},
+										"sink": {
+											"name": "h4_emergency_investment_in_healthcare"
+										}
+									},
+									{
+										"source": {
+											"path": "$['h5_investment_in_vaccines']"
+										},
+										"sink": {
+											"name": "h5_investment_in_vaccines"
+										}
+									},
+									{
+										"source": {
+											"path": "$['m1_wildcard']"
+										},
+										"sink": {
+											"name": "m1_wildcard"
+										}
+									},
+									{
+										"source": {
+											"path": "$['confirmedcases']"
+										},
+										"sink": {
+											"name": "confirmedcases"
+										}
+									},
+									{
+										"source": {
+											"path": "$['confirmeddeaths']"
+										},
+										"sink": {
+											"name": "confirmeddeaths"
+										}
+									},
+									{
+										"source": {
+											"path": "$['stringencyindex']"
+										},
+										"sink": {
+											"name": "stringencyindex"
+										}
+									},
+									{
+										"source": {
+											"path": "$['stringencyindexfordisplay']"
+										},
+										"sink": {
+											"name": "stringencyindexfordisplay"
+										}
+									},
+									{
+										"source": {
+											"path": "$['legacystringencyindex']"
+										},
+										"sink": {
+											"name": "legacystringencyindex"
+										}
+									},
+									{
+										"source": {
+											"path": "$['legacystringencyindexfordisplay']"
+										},
+										"sink": {
+											"name": "legacystringencyindexfordisplay"
+										}
+									},
+									{
+										"source": {
+											"path": "$['iso_country']"
+										},
+										"sink": {
+											"name": "iso_country"
+										}
+									},
+									{
+										"source": {
+											"path": "$['load_date']"
+										},
+										"sink": {
+											"name": "load_date"
+										}
+									},
+									{
+										"source": {
+											"path": "$['id']"
+										},
+										"sink": {
+											"name": "id"
+										}
+									},
+									{
+										"source": {
+											"path": "$['_rid']"
+										},
+										"sink": {
+											"name": "_rid"
+										}
+									},
+									{
+										"source": {
+											"path": "$['_self']"
+										},
+										"sink": {
+											"name": "_self"
+										}
+									},
+									{
+										"source": {
+											"path": "$['_etag']"
+										},
+										"sink": {
+											"name": "_etag"
+										}
+									},
+									{
+										"source": {
+											"path": "$['_attachments']"
+										},
+										"sink": {
+											"name": "_attachments"
+										}
+									},
+									{
+										"source": {
+											"path": "$['_ts']"
+										},
+										"sink": {
+											"name": "_ts"
+										}
+									}
+								]
+							}
 						},
 						"inputs": [
 							{
@@ -490,14 +918,14 @@
 						],
 						"outputs": [
 							{
-								"referenceName": "DS_DataLake_Parquet",
+								"referenceName": "ds_datalake_json",
 								"type": "DatasetReference",
 								"parameters": {
-									"ContainerName": {
+									"Containername": {
 										"value": "@pipeline().parameters.containername",
 										"type": "Expression"
 									},
-									"FolderName": {
+									"foldername": {
 										"value": "@pipeline().parameters.foldername",
 										"type": "Expression"
 									}
@@ -521,7 +949,45 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ds_cosmosdb')]",
-				"[concat(variables('factoryId'), '/datasets/DS_DataLake_Parquet')]"
+				"[concat(variables('factoryId'), '/datasets/ds_datalake_json')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/dataflow_cosmosdb_datalake')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_cosmosdb",
+								"type": "DatasetReference"
+							},
+							"name": "cosmosdb"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_datalake_json",
+								"type": "DatasetReference"
+							},
+							"name": "datalake"
+						}
+					],
+					"transformations": [
+						{
+							"name": "SourceSystem"
+						}
+					],
+					"script": "source(output(\n\t\tcountryname as string,\n\t\tcountrycode as string,\n\t\tdate as string,\n\t\tc1_school_closing as string,\n\t\tc1_flag as boolean,\n\t\tc2_workplace_closing as string,\n\t\tc2_flag as boolean,\n\t\tc3_cancel_public_events as string,\n\t\tc3_flag as boolean,\n\t\tc4_restrictions_on_gatherings as string,\n\t\tc4_flag as boolean,\n\t\tc5_close_public_transport as string,\n\t\tc5_flag as boolean,\n\t\tc6_stay_at_home_requirements as string,\n\t\tc6_flag as boolean,\n\t\tc7_restrictions_on_internal_movement as string,\n\t\tc7_flag as boolean,\n\t\tc8_international_travel_controls as string,\n\t\te1_income_support as string,\n\t\te1_flag as boolean,\n\t\t{e2_debt/contract_relief} as string,\n\t\te3_fiscal_measures as string,\n\t\te4_international_support as string,\n\t\th1_public_information_campaigns as string,\n\t\th1_flag as boolean,\n\t\th2_testing_policy as string,\n\t\th3_contact_tracing as string,\n\t\th4_emergency_investment_in_healthcare as string,\n\t\th5_investment_in_vaccines as string,\n\t\tm1_wildcard as string,\n\t\tconfirmedcases as string,\n\t\tconfirmeddeaths as string,\n\t\tstringencyindex as string,\n\t\tstringencyindexfordisplay as string,\n\t\tlegacystringencyindex as string,\n\t\tlegacystringencyindexfordisplay as string,\n\t\tiso_country as string,\n\t\tload_date as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'document') ~> cosmosdb\ncosmosdb derive(SourceSystem = 'CosmosDB') ~> SourceSystem\nSourceSystem sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tpartitionFileNames:['covid19cosmosdb'],\n\tpartitionBy('hash', 1),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> datalake"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_cosmosdb')]",
+				"[concat(variables('factoryId'), '/datasets/ds_datalake_json')]"
 			]
 		},
 		{
