@@ -31,7 +31,10 @@
 									"additionalColumns": [
 										{
 											"name": "SourceSystem",
-											"value": "SqlAzure"
+											"value": {
+												"value": "@item().Name",
+												"type": "Expression"
+											}
 										}
 									],
 									"queryTimeout": "02:00:00",
