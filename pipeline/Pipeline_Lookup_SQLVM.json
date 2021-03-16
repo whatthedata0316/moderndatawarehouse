@@ -21,30 +21,10 @@
 						"partitionOption": "None"
 					},
 					"dataset": {
-						"referenceName": "DS_SqlServerVM",
+						"referenceName": "DS_SQLServerVM",
 						"type": "DatasetReference"
 					},
 					"firstRowOnly": false
-				}
-			},
-			{
-				"name": "Execute Pipeline",
-				"type": "ExecutePipeline",
-				"dependsOn": [
-					{
-						"activity": "Lookup",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"userProperties": [],
-				"typeProperties": {
-					"pipeline": {
-						"referenceName": "Pipeline_Load_SQLVM",
-						"type": "PipelineReference"
-					},
-					"waitOnCompletion": true
 				}
 			}
 		],
