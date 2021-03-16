@@ -390,35 +390,6 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/SqlServerTable')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "LS_SqlServer",
-					"type": "LinkedServiceReference"
-				},
-				"parameters": {
-					"SchemaName": {
-						"type": "string"
-					},
-					"TableName": {
-						"type": "string"
-					}
-				},
-				"folder": {
-					"name": "wth-team2"
-				},
-				"annotations": [],
-				"type": "SqlServerTable",
-				"schema": [],
-				"typeProperties": {}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/LS_SqlServer')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/ds_cosmosdb')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
