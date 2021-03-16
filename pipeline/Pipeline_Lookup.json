@@ -106,6 +106,30 @@
 									}
 								}
 							]
+						},
+						{
+							"value": "CosmosDB",
+							"activities": [
+								{
+									"name": "LoadCosmosDB",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "pipeline_Load_Cosmos_copy1",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"TableList": {
+												"value": "@activity('Lookup').output.value",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							]
 						}
 					],
 					"defaultActivities": [
