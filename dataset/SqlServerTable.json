@@ -1,0 +1,15 @@
+{
+	"name": "SqlServerTable",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_SqlServer",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "wth-team2"
+		},
+		"annotations": [],
+		"type": "SqlServerTable",
+		"schema": []
+	}
+}
