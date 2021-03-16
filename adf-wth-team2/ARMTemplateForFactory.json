@@ -229,10 +229,6 @@
 									"typeProperties": {
 										"source": {
 											"type": "AzureSqlSource",
-											"additionalColumns": {
-												"type": "Expression",
-												"value": "@item().Name"
-											},
 											"queryTimeout": "02:00:00",
 											"partitionOption": "None"
 										},
@@ -295,6 +291,9 @@
 				"parameters": {
 					"TableList": {
 						"type": "array"
+					},
+					"SoureSystem": {
+						"type": "string"
 					}
 				},
 				"folder": {
@@ -372,7 +371,7 @@
 							"waitOnCompletion": true,
 							"parameters": {
 								"TableList": {
-									"value": "@activity('Lookup').output.Value",
+									"value": "@activity('Lookup').output.value",
 									"type": "Expression"
 								}
 							}
