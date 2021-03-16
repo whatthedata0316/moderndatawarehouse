@@ -99,9 +99,6 @@
 		"parameters": {
 			"TableList": {
 				"type": "array"
-			},
-			"SoureSystem": {
-				"type": "string"
 			}
 		},
 		"folder": {
