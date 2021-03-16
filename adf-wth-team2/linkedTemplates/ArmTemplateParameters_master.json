@@ -1,0 +1,30 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "adf-wth-team2"
+		},
+		"LS_AzureSynapseAnalytics_connectionString": {
+			"value": ""
+		},
+		"LS_CosmosDb_connectionString": {
+			"value": ""
+		},
+		"LS_SQLAzure_connectionString": {
+			"value": ""
+		},
+		"LS_SqlServer_connectionString": {
+			"value": ""
+		},
+		"LS_AzureDataLakeStorage_properties_typeProperties_url": {
+			"value": "https://covid19yjqwgbkvikf6e.dfs.core.windows.net"
+		},
+		"containerUri": {
+			"value": ""
+		},
+		"containerSasToken": {
+			"value": ""
+		}
+	}
+}
