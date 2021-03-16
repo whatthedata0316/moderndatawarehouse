@@ -28,12 +28,10 @@
 							"typeProperties": {
 								"source": {
 									"type": "AzureSqlSource",
-									"additionalColumns": [
-										{
-											"name": "SourceSytem",
-											"value": "$$COLUMN:SqlAzure"
-										}
-									],
+									"additionalColumns": {
+										"type": "Expression",
+										"value": "@item().Name"
+									},
 									"queryTimeout": "02:00:00",
 									"partitionOption": "None"
 								},
