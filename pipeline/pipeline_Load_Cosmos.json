@@ -1,0 +1,9 @@
+{
+	"name": "pipeline_Load_Cosmos",
+	"properties": {
+		"folder": {
+			"name": "wth-team2"
+		},
+		"annotations": []
+	}
+}
