@@ -5,8 +5,15 @@
 		"annotations": [],
 		"type": "SqlServer",
 		"typeProperties": {
-			"connectionString": "integrated security=False;data source=covid19;initial catalog=covid19;user id=sqladmin",
-			"encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiIyNWEwNWNlOC1kYmU5LTQ3ZTItOWYzMi0wNzZhYTY2OGY0MWQiLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
+			"connectionString": "Integrated Security=False;Data Source=covid19;Initial Catalog=covid19;User ID=sqladmin",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "LS_AzureKeyVault",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "SQLVMPassword"
+			}
 		},
 		"connectVia": {
 			"referenceName": "SelfHostedIntegrationRuntime",
