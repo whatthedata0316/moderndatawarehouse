@@ -13,6 +13,101 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/pipeline_load_policydata_from_adls_to_Synapse')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Data flow",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "dataflow_datalake_policies",
+								"type": "DataFlowReference",
+								"parameters": {
+									"ContainerName": {
+										"value": "'@{pipeline().parameters.ContainerName}'",
+										"type": "Expression"
+									},
+									"FolderName": {
+										"value": "'@{pipeline().parameters.FolderName}'",
+										"type": "Expression"
+									}
+								},
+								"datasetParameters": {
+									"ADLSCosmosDB": {
+										"Containername": {
+											"value": "@pipeline().parameters.ContainerName",
+											"type": "Expression"
+										},
+										"foldername": {
+											"value": "@pipeline().parameters.FolderName",
+											"type": "Expression"
+										}
+									},
+									"AzureSynapse": {
+										"SchemaName": {
+											"value": "@pipeline().parameters.SchemaName",
+											"type": "Expression"
+										},
+										"TableName": {
+											"value": "@pipeline().parameters.TableName",
+											"type": "Expression"
+										}
+									}
+								}
+							},
+							"staging": {
+								"linkedService": {
+									"referenceName": "LS_AzureDataLakeStorage",
+									"type": "LinkedServiceReference"
+								},
+								"folderPath": "raw/Polybase"
+							},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "None"
+						}
+					}
+				],
+				"parameters": {
+					"ContainerName": {
+						"type": "string",
+						"defaultValue": "raw"
+					},
+					"FolderName": {
+						"type": "string",
+						"defaultValue": "CosmosDB_SingleFile"
+					},
+					"SchemaName": {
+						"type": "string",
+						"defaultValue": "Stage"
+					},
+					"TableName": {
+						"type": "string",
+						"defaultValue": "Policies"
+					}
+				},
+				"folder": {
+					"name": "wth-team2"
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/Pipeline_Lookup')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
