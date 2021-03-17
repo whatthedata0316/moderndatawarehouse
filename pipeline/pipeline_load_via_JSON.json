@@ -1,0 +1,9 @@
+{
+	"name": "pipeline_load_via_JSON",
+	"properties": {
+		"folder": {
+			"name": "wth-team2"
+		},
+		"annotations": []
+	}
+}
