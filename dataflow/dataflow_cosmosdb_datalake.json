@@ -1,6 +1,9 @@
 {
 	"name": "dataflow_cosmosdb_datalake",
 	"properties": {
+		"folder": {
+			"name": "wth-team2"
+		},
 		"type": "MappingDataFlow",
 		"typeProperties": {
 			"sources": [
