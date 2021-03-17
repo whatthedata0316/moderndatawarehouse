@@ -5,6 +5,7 @@
 		"type": "AzureKeyVault",
 		"typeProperties": {
 			"baseUrl": "https://HackTeam2KeyVault.vault.azure.net/"
-		}
+		},
+		"description": "this is connection to key vault"
 	}
 }
