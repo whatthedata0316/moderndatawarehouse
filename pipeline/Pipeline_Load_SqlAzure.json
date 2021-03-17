@@ -85,7 +85,7 @@
 											"type": "Expression"
 										},
 										"FolderName": {
-											"value": "@item().FolderName",
+											"value": "@concat(item().FolderName,'/',item().TableName)",
 											"type": "Expression"
 										}
 									}
