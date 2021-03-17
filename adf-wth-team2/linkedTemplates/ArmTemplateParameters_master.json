@@ -20,6 +20,9 @@
 		"LS_AzureDataLakeStorage_properties_typeProperties_url": {
 			"value": "https://covid19yjqwgbkvikf6e.dfs.core.windows.net"
 		},
+		"LS_AzureKeyVault_properties_typeProperties_baseUrl": {
+			"value": "https://HackTeam2KeyVault.vault.azure.net/"
+		},
 		"containerUri": {
 			"value": ""
 		},

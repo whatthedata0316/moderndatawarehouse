@@ -26,6 +26,10 @@
 		"LS_AzureDataLakeStorage_properties_typeProperties_url": {
 			"type": "string",
 			"defaultValue": "https://covid19yjqwgbkvikf6e.dfs.core.windows.net"
+		},
+		"LS_AzureKeyVault_properties_typeProperties_baseUrl": {
+			"type": "string",
+			"defaultValue": "https://HackTeam2KeyVault.vault.azure.net/"
 		}
 	},
 	"variables": {
@@ -1770,6 +1774,20 @@
 				"[concat(variables('factoryId'), '/datasets/ds_datalake_json')]",
 				"[concat(variables('factoryId'), '/datasets/DS_AzureSynapse')]"
 			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_AzureKeyVault')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "this is connection to key vault",
+				"annotations": [],
+				"type": "AzureKeyVault",
+				"typeProperties": {
+					"baseUrl": "[parameters('LS_AzureKeyVault_properties_typeProperties_baseUrl')]"
+				}
+			},
+			"dependsOn": []
 		}
 	]
 }
