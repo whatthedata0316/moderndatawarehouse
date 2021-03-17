@@ -105,10 +105,12 @@
 				},
 				"parameters": {
 					"SchemaName": {
-						"type": "string"
+						"type": "string",
+						"defaultValue": "STAGE"
 					},
 					"TableName": {
-						"type": "string"
+						"type": "string",
+						"defaultValue": "Policies"
 					}
 				},
 				"folder": {
@@ -1250,6 +1252,9 @@
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
 			"properties": {
+				"folder": {
+					"name": "wth-team2"
+				},
 				"type": "MappingDataFlow",
 				"typeProperties": {
 					"sources": [
@@ -1281,6 +1286,43 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ds_cosmosdb')]",
 				"[concat(variables('factoryId'), '/datasets/ds_datalake_json')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/dataflow_datalake_policies')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "wth-team2"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_datalake_json",
+								"type": "DatasetReference"
+							},
+							"name": "ADLSCosmosDB"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "DS_AzureSynapse",
+								"type": "DatasetReference"
+							},
+							"name": "AzureSynapse"
+						}
+					],
+					"transformations": [],
+					"script": "parameters{\n\tContainerName as string ('raw'),\n\tFolderName as string ('CosmosDB_SingleFile')\n}\nsource(output(\n\t\tSourceSystem as string,\n\t\tc1_flag as boolean,\n\t\tc1_school_closing as short,\n\t\tc2_flag as boolean,\n\t\tc2_workplace_closing as short,\n\t\tc3_cancel_public_events as short,\n\t\tc3_flag as boolean,\n\t\tc4_flag as boolean,\n\t\tc4_restrictions_on_gatherings as short,\n\t\tc5_close_public_transport as short,\n\t\tc5_flag as boolean,\n\t\tc6_flag as boolean,\n\t\tc6_stay_at_home_requirements as short,\n\t\tc7_flag as boolean,\n\t\tc7_restrictions_on_internal_movement as short,\n\t\tc8_international_travel_controls as short,\n\t\tconfirmedcases as short,\n\t\tconfirmeddeaths as short,\n\t\tcountrycode as string,\n\t\tcountryname as string,\n\t\tdate as string,\n\t\te1_flag as boolean,\n\t\te1_income_support as short,\n\t\t{e2_debt/contract_relief} as short,\n\t\te3_fiscal_measures as integer,\n\t\te4_international_support as double,\n\t\th1_flag as boolean,\n\t\th1_public_information_campaigns as short,\n\t\th2_testing_policy as short,\n\t\th3_contact_tracing as short,\n\t\th4_emergency_investment_in_healthcare as integer,\n\t\th5_investment_in_vaccines as boolean,\n\t\tiso_country as string,\n\t\tload_date as string,\n\t\tstringencyindex as double,\n\t\tstringencyindexfordisplay as double\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: true,\n\trowUrlColumn: 'FileName',\n\tdocumentForm: 'documentPerLine',\n\twildcardPaths:[($FolderName)]) ~> ADLSCosmosDB\nADLSCosmosDB sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\ttruncate:true,\n\tformat: 'table',\n\tstaged: true,\n\tallowCopyCommand: true,\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> AzureSynapse"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_datalake_json')]",
+				"[concat(variables('factoryId'), '/datasets/DS_AzureSynapse')]"
 			]
 		},
 		{
@@ -1462,173 +1504,6 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/dataflows/dataflow_cosmosdb_datalake')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/Pipeline_Lookup')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "Lookup",
-						"type": "Lookup",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "7.00:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "AzureSqlSource",
-								"sqlReaderStoredProcedureName": "[[dbo].[usp_gettablelist]",
-								"storedProcedureParameters": {
-									"Name": {
-										"type": "String",
-										"value": {
-											"value": "@pipeline().parameters.Name",
-											"type": "Expression"
-										}
-									}
-								},
-								"queryTimeout": "02:00:00",
-								"partitionOption": "None"
-							},
-							"dataset": {
-								"referenceName": "DS_SQLAzure",
-								"type": "DatasetReference",
-								"parameters": {
-									"SchemaName": "dbo",
-									"TableName": "covid19_metrics"
-								}
-							},
-							"firstRowOnly": false
-						}
-					},
-					{
-						"name": "Switch1",
-						"type": "Switch",
-						"dependsOn": [
-							{
-								"activity": "Lookup",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"on": {
-								"value": "@pipeline().parameters.Name",
-								"type": "Expression"
-							},
-							"cases": [
-								{
-									"value": "SqlAzure",
-									"activities": [
-										{
-											"name": "Execute SQLAzure Pipeline",
-											"type": "ExecutePipeline",
-											"dependsOn": [],
-											"userProperties": [],
-											"typeProperties": {
-												"pipeline": {
-													"referenceName": "Pipeline_Load_SqlAzure",
-													"type": "PipelineReference"
-												},
-												"waitOnCompletion": true,
-												"parameters": {
-													"TableList": {
-														"value": "@activity('Lookup').output.value",
-														"type": "Expression"
-													}
-												}
-											}
-										}
-									]
-								},
-								{
-									"value": "SqlVM",
-									"activities": [
-										{
-											"name": "Execute SQLVM Pipeline",
-											"type": "ExecutePipeline",
-											"dependsOn": [],
-											"userProperties": [],
-											"typeProperties": {
-												"pipeline": {
-													"referenceName": "Pipeline_Load_SqlVM",
-													"type": "PipelineReference"
-												},
-												"waitOnCompletion": true,
-												"parameters": {
-													"TableList": {
-														"value": "@activity('Lookup').output.value",
-														"type": "Expression"
-													}
-												}
-											}
-										}
-									]
-								},
-								{
-									"value": "CosmosDB",
-									"activities": [
-										{
-											"name": "LoadCosmosDB",
-											"type": "ExecutePipeline",
-											"dependsOn": [],
-											"userProperties": [],
-											"typeProperties": {
-												"pipeline": {
-													"referenceName": "pipeline_Load_Cosmos_copy1",
-													"type": "PipelineReference"
-												},
-												"waitOnCompletion": true,
-												"parameters": {
-													"TableList": {
-														"value": "@activity('Lookup').output.value",
-														"type": "Expression"
-													}
-												}
-											}
-										}
-									]
-								}
-							],
-							"defaultActivities": [
-								{
-									"name": "Wait1",
-									"type": "Wait",
-									"dependsOn": [],
-									"userProperties": [],
-									"typeProperties": {
-										"waitTimeInSeconds": 1
-									}
-								}
-							]
-						}
-					}
-				],
-				"parameters": {
-					"Name": {
-						"type": "string"
-					}
-				},
-				"folder": {
-					"name": "wth-team2"
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/DS_SQLAzure')]",
-				"[concat(variables('factoryId'), '/pipelines/Pipeline_Load_SqlAzure')]",
-				"[concat(variables('factoryId'), '/pipelines/Pipeline_Load_SqlVM')]",
-				"[concat(variables('factoryId'), '/pipelines/pipeline_Load_Cosmos_copy1')]"
 			]
 		}
 	]
