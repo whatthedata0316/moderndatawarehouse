@@ -50,6 +50,20 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/LS_AzureKeyVault')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "this is connection to key vault",
+				"annotations": [],
+				"type": "AzureKeyVault",
+				"typeProperties": {
+					"baseUrl": "[parameters('LS_AzureKeyVault_properties_typeProperties_baseUrl')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/LS_AzureSynapseAnalytics')]",
 			"type": "Microsoft.DataFactory/factories/linkedServices",
 			"apiVersion": "2018-06-01",
@@ -99,20 +113,6 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/LS_AzureKeyVault')]",
-			"type": "Microsoft.DataFactory/factories/linkedServices",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"description": "this is connection to key vault",
-				"annotations": [],
-				"type": "AzureKeyVault",
-				"typeProperties": {
-					"baseUrl": "[parameters('LS_AzureKeyVault_properties_typeProperties_baseUrl')]"
-				}
-			},
-			"dependsOn": []
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/DS_AzureSynapse')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -123,12 +123,10 @@
 				},
 				"parameters": {
 					"SchemaName": {
-						"type": "string",
-						"defaultValue": "STAGE"
+						"type": "string"
 					},
 					"TableName": {
-						"type": "string",
-						"defaultValue": "Policies"
+						"type": "string"
 					}
 				},
 				"folder": {
@@ -426,7 +424,15 @@
 				"annotations": [],
 				"type": "SqlServer",
 				"typeProperties": {
-					"connectionString": "[parameters('LS_SqlServer_connectionString')]"
+					"connectionString": "[parameters('LS_SqlServer_connectionString')]",
+					"password": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "LS_AzureKeyVault",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "SQLVMPassword"
+					}
 				},
 				"connectVia": {
 					"referenceName": "SelfHostedIntegrationRuntime",
@@ -434,7 +440,8 @@
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/integrationRuntimes/SelfHostedIntegrationRuntime')]"
+				"[concat(variables('factoryId'), '/integrationRuntimes/SelfHostedIntegrationRuntime')]",
+				"[concat(variables('factoryId'), '/linkedServices/LS_AzureKeyVault')]"
 			]
 		},
 		{
@@ -1344,121 +1351,65 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/Pipeline_Load_SqlVM')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
+			"name": "[concat(parameters('factoryName'), '/dataflow_load_dimension')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"activities": [
-					{
-						"name": "ForEach",
-						"type": "ForEach",
-						"dependsOn": [],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@pipeline().parameters.TableList",
-								"type": "Expression"
-							},
-							"activities": [
-								{
-									"name": "Copy data",
-									"type": "Copy",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "7.00:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "SqlServerSource",
-											"additionalColumns": [
-												{
-													"name": "SourceSystem",
-													"value": {
-														"value": "@item().Name",
-														"type": "Expression"
-													}
-												}
-											],
-											"queryTimeout": "02:00:00",
-											"partitionOption": "None"
-										},
-										"sink": {
-											"type": "ParquetSink",
-											"storeSettings": {
-												"type": "AzureBlobFSWriteSettings"
-											},
-											"formatSettings": {
-												"type": "ParquetWriteSettings"
-											}
-										},
-										"enableStaging": false,
-										"translator": {
-											"type": "TabularTranslator",
-											"typeConversion": true,
-											"typeConversionSettings": {
-												"allowDataTruncation": true,
-												"treatBooleanAsNumber": false
-											}
-										}
-									},
-									"inputs": [
-										{
-											"referenceName": "DS_SqlServerVM",
-											"type": "DatasetReference",
-											"parameters": {
-												"SchemaName": {
-													"value": "@item().SchemaName",
-													"type": "Expression"
-												},
-												"TableName": {
-													"value": "@item().TableName",
-													"type": "Expression"
-												}
-											}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "DS_DataLake_Parquet",
-											"type": "DatasetReference",
-											"parameters": {
-												"ContainerName": {
-													"value": "@item().ContainerName",
-													"type": "Expression"
-												},
-												"FolderName": {
-													"value": "@concat(item().FolderName,'/',item().TableName)",
-													"type": "Expression"
-												}
-											}
-										}
-									]
-								}
-							]
-						}
-					}
-				],
-				"parameters": {
-					"TableList": {
-						"type": "array"
-					},
-					"SoureSystem": {
-						"type": "string"
-					}
-				},
 				"folder": {
 					"name": "wth-team2"
 				},
-				"annotations": []
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "DS_AzureSynapse",
+								"type": "DatasetReference"
+							},
+							"name": "StageCountry"
+						},
+						{
+							"dataset": {
+								"referenceName": "DS_AzureSynapse",
+								"type": "DatasetReference"
+							},
+							"name": "DimCountry"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "DS_AzureSynapse",
+								"type": "DatasetReference"
+							},
+							"name": "DimCountryDestination"
+						}
+					],
+					"transformations": [
+						{
+							"name": "CreatingHash"
+						},
+						{
+							"name": "Exists"
+						},
+						{
+							"name": "GrabAllColumns"
+						},
+						{
+							"name": "SelectingAllColumns"
+						},
+						{
+							"name": "AddingTimestamp"
+						},
+						{
+							"name": "AlterRow"
+						}
+					],
+					"script": "source(output(\n\t\tCountryCode as string,\n\t\tCountry as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table',\n\tstaged: false) ~> StageCountry\nsource(output(\n\t\tCountryCode as string,\n\t\tCountry as string,\n\t\tHashValue as string,\n\t\tInsertedDate as timestamp,\n\t\tUpdatedDate as timestamp\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table',\n\tstaged: false) ~> DimCountry\nStageCountry derive(HashValue = sha1(Country)) ~> CreatingHash\nCreatingHash, DimCountry exists(CreatingHash@HashValue == DimCountry@HashValue,\n\tnegate:true,\n\tbroadcast: 'auto')~> Exists\nExists, DimCountry lookup(StageCountry@Country == DimCountry@Country,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> GrabAllColumns\nAddingTimestamp select(mapColumn(\n\t\tCountry = StageCountry@Country,\n\t\tCountryCode = StageCountry@CountryCode,\n\t\tHashValue = CreatingHash@HashValue,\n\t\tInsertedDate = inserted_date,\n\t\tUpdatedDate = updated_date\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectingAllColumns\nGrabAllColumns derive(inserted_date = iif(isNull(InsertedDate),currentTimestamp(),InsertedDate),\n\t\tupdated_date = iif(isNull(UpdatedDate),currentTimestamp(),UpdatedDate)) ~> AddingTimestamp\nSelectingAllColumns alterRow(upsertIf(true())) ~> AlterRow\nAlterRow sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:false,\n\tupdateable:false,\n\tupsertable:true,\n\tkeys:['Country'],\n\tformat: 'table',\n\tstaged: true,\n\tallowCopyCommand: true,\n\tmapColumn(\n\t\tCountry,\n\t\tCountryCode,\n\t\tHashValue,\n\t\tInsertedDate,\n\t\tUpdatedDate\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> DimCountryDestination"
+				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/DS_SqlServerVM')]",
-				"[concat(variables('factoryId'), '/datasets/DS_DataLake_Parquet')]"
+				"[concat(variables('factoryId'), '/datasets/DS_AzureSynapse')]"
 			]
 		}
 	]
