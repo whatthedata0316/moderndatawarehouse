@@ -85,6 +85,13 @@
 							}
 						}
 					},
+					"staging": {
+						"linkedService": {
+							"referenceName": "LS_AzureDataLakeStorage",
+							"type": "LinkedServiceReference"
+						},
+						"folderPath": "raw/Polybase"
+					},
 					"compute": {
 						"coreCount": 8,
 						"computeType": "General"
