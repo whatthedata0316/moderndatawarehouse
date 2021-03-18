@@ -22,10 +22,18 @@
 							"StageCovid19Metrics": {
 								"SchemaName": "STAGE",
 								"TableName": "vw_Covid19_Metrics"
+							},
+							"FactCovid19Metrics": {
+								"SchemaName": "DW",
+								"TableName": "FactCovid19Metrics"
 							}
 						}
 					},
 					"staging": {
+						"linkedService": {
+							"referenceName": "LS_AzureDataLakeStorage",
+							"type": "LinkedServiceReference"
+						},
 						"folderPath": "raw/Polybase"
 					},
 					"compute": {
