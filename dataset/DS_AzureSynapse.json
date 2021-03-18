@@ -7,12 +7,10 @@
 		},
 		"parameters": {
 			"SchemaName": {
-				"type": "string",
-				"defaultValue": "STAGE"
+				"type": "string"
 			},
 			"TableName": {
-				"type": "string",
-				"defaultValue": "Policies"
+				"type": "string"
 			}
 		},
 		"folder": {

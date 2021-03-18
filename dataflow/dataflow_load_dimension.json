@@ -1,0 +1,46 @@
+{
+	"name": "dataflow_load_dimension",
+	"properties": {
+		"folder": {
+			"name": "wth-team2"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "DS_AzureSynapse",
+						"type": "DatasetReference"
+					},
+					"name": "StageCountry"
+				},
+				{
+					"dataset": {
+						"referenceName": "DS_AzureSynapse",
+						"type": "DatasetReference"
+					},
+					"name": "DimCountry"
+				}
+			],
+			"sinks": [],
+			"transformations": [
+				{
+					"name": "CreatingHash"
+				},
+				{
+					"name": "Exists"
+				},
+				{
+					"name": "GrabAllColumns"
+				},
+				{
+					"name": "AddingTimestampColumns"
+				},
+				{
+					"name": "Select1"
+				}
+			],
+			"script": "source(output(\n\t\tCountryCode as string,\n\t\tCountry as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table',\n\tstaged: false) ~> StageCountry\nsource(output(\n\t\tCountryCode as string,\n\t\tCountry as string,\n\t\tHashValue as string,\n\t\tInsertedDate as timestamp,\n\t\tUpdatedDate as timestamp\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table',\n\tstaged: false) ~> DimCountry\nDimCountry derive(HashValue = sha1(Country)) ~> CreatingHash\nCreatingHash, DimCountry exists(CreatingHash@HashValue == DimCountry@HashValue,\n\tnegate:true,\n\tbroadcast: 'auto')~> Exists\nExists, StageCountry lookup(DimCountry@Country == StageCountry@Country,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> GrabAllColumns\nSelect1 derive(Insert_date = iif(isNull(InsertedDate),currentTimestamp(),InsertedDate),\n\t\tupdate_date = iif(isNull(UpdatedDate),currentTimestamp(),UpdatedDate)) ~> AddingTimestampColumns\nGrabAllColumns select(mapColumn(\n\t\tCountry = StageCountry@Country,\n\t\tCountryCode = StageCountry@CountryCode,\n\t\tHashValue,\n\t\tInsertedDate,\n\t\tUpdatedDate\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> Select1"
+		}
+	}
+}
