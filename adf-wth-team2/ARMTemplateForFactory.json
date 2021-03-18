@@ -1913,14 +1913,7 @@
 					{
 						"name": "LoadingDimPolicy",
 						"type": "ExecuteDataFlow",
-						"dependsOn": [
-							{
-								"activity": "LoadingDimCountry",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
+						"dependsOn": [],
 						"policy": {
 							"timeout": "7.00:00:00",
 							"retry": 0,
@@ -1962,6 +1955,52 @@
 							},
 							"traceLevel": "Fine"
 						}
+					},
+					{
+						"name": "LoadingDimDates",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "dataflow_load_date",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"StageDate": {
+										"SchemaName": "STAGE",
+										"TableName": "vw_Dates"
+									},
+									"DimDate": {
+										"SchemaName": "DW",
+										"TableName": "DimDates"
+									},
+									"DimDateDest": {
+										"SchemaName": "DW",
+										"TableName": "DimDates"
+									}
+								}
+							},
+							"staging": {
+								"linkedService": {
+									"referenceName": "LS_AzureDataLakeStorage",
+									"type": "LinkedServiceReference"
+								},
+								"folderPath": "raw/Polybase"
+							},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
 					}
 				],
 				"folder": {
@@ -1972,7 +2011,8 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/dataflows/dataflow_load_country')]",
 				"[concat(variables('factoryId'), '/linkedServices/LS_AzureDataLakeStorage')]",
-				"[concat(variables('factoryId'), '/dataflows/dataflow_load_policy')]"
+				"[concat(variables('factoryId'), '/dataflows/dataflow_load_policy')]",
+				"[concat(variables('factoryId'), '/dataflows/dataflow_load_date')]"
 			]
 		},
 		{
@@ -2031,6 +2071,56 @@
 						}
 					],
 					"script": "source(output(\n\t\tCountryCode as string,\n\t\tCountry as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table',\n\tstaged: false) ~> StageCountry\nsource(output(\n\t\tCountryCode as string,\n\t\tCountry as string,\n\t\tHashValue as string,\n\t\tInsertedDate as timestamp,\n\t\tUpdatedDate as timestamp\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table',\n\tstaged: false) ~> DimCountry\nStageCountry derive(HashValue = sha1(Country)) ~> CreatingHash\nCreatingHash, DimCountry exists(CreatingHash@HashValue == DimCountry@HashValue,\n\tnegate:true,\n\tbroadcast: 'auto')~> Exists\nExists, DimCountry lookup(StageCountry@Country == DimCountry@Country,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> GrabAllColumns\nAddingTimestamp select(mapColumn(\n\t\tCountry = StageCountry@Country,\n\t\tCountryCode = StageCountry@CountryCode,\n\t\tHashValue = CreatingHash@HashValue,\n\t\tInsertedDate = inserted_date,\n\t\tUpdatedDate = updated_date\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectingAllColumns\nGrabAllColumns derive(inserted_date = iif(isNull(InsertedDate),fromUTC(currentTimestamp(),'PST'),InsertedDate),\n\t\tupdated_date = iif(isNull(UpdatedDate),fromUTC(currentTimestamp(),'PST'),UpdatedDate)) ~> AddingTimestamp\nSelectingAllColumns alterRow(upsertIf(true())) ~> AlterRow\nAlterRow sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:false,\n\tupdateable:false,\n\tupsertable:true,\n\tkeys:['Country'],\n\tformat: 'table',\n\tstaged: true,\n\tallowCopyCommand: true,\n\tmapColumn(\n\t\tCountry,\n\t\tCountryCode,\n\t\tHashValue,\n\t\tInsertedDate,\n\t\tUpdatedDate\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> DimCountryDestination"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/DS_AzureSynapse')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/dataflow_load_date')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "wth-team2"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "DS_AzureSynapse",
+								"type": "DatasetReference"
+							},
+							"name": "StageDate"
+						},
+						{
+							"dataset": {
+								"referenceName": "DS_AzureSynapse",
+								"type": "DatasetReference"
+							},
+							"name": "DimDate"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "DS_AzureSynapse",
+								"type": "DatasetReference"
+							},
+							"name": "DimDateDest"
+						}
+					],
+					"transformations": [
+						{
+							"name": "AlterRow1"
+						},
+						{
+							"name": "Exists"
+						}
+					],
+					"script": "source(output(\n\t\tDateKey as integer,\n\t\tFullDate as date,\n\t\tisWeekDay as boolean,\n\t\tDayOfWeek as integer,\n\t\tDayOfMonth as integer,\n\t\tDayOfQuarter as integer,\n\t\tDayOfYear as integer,\n\t\tDayName as string,\n\t\tWeekOfYear as integer,\n\t\tWeekName as string,\n\t\tMonthOfYear as integer,\n\t\tMonthName as string,\n\t\tCalendarQuarter as integer,\n\t\tCalendarQuarterName as string,\n\t\tCalendarYear as integer,\n\t\tFiscalMonth as integer,\n\t\tFiscalMonthName as string,\n\t\tFiscalQuarter as integer,\n\t\tFiscalQuarterName as string,\n\t\tFiscalYear as integer\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table',\n\tstaged: false) ~> StageDate\nsource(output(\n\t\tDateKey as integer,\n\t\tFullDate as date,\n\t\tisWeekDay as boolean,\n\t\tDayOfWeek as integer,\n\t\tDayOfMonth as integer,\n\t\tDayOfQuarter as integer,\n\t\tDayOfYear as integer,\n\t\tDayName as string,\n\t\tWeekOfYear as integer,\n\t\tWeekName as string,\n\t\tMonthOfYear as integer,\n\t\tMonthName as string,\n\t\tCalendarQuarter as integer,\n\t\tCalendarQuarterName as string,\n\t\tCalendarYear as integer,\n\t\tFiscalMonth as integer,\n\t\tFiscalMonthName as string,\n\t\tFiscalQuarter as integer,\n\t\tFiscalQuarterName as string,\n\t\tFiscalYear as integer\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table',\n\tstaged: false) ~> DimDate\nExists alterRow(upsertIf(true())) ~> AlterRow1\nStageDate, DimDate exists(StageDate@DateKey == DimDate@DateKey,\n\tnegate:true,\n\tbroadcast: 'auto')~> Exists\nAlterRow1 sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:false,\n\tupdateable:false,\n\tupsertable:true,\n\tkeys:['DateKey'],\n\tformat: 'table',\n\tstaged: true,\n\tallowCopyCommand: true,\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> DimDateDest"
 				}
 			},
 			"dependsOn": [
