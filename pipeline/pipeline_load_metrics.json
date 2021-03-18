@@ -1,0 +1,9 @@
+{
+	"name": "pipeline_load_metrics",
+	"properties": {
+		"folder": {
+			"name": "wth-team2"
+		},
+		"annotations": []
+	}
+}
