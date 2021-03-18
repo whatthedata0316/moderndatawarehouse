@@ -23,6 +23,10 @@
 								"SchemaName": "STAGE",
 								"TableName": "vw_Covid19_Metrics"
 							},
+							"DimPolicies": {
+								"SchemaName": "DW",
+								"TableName": "DimPolicies"
+							},
 							"FactCovid19Metrics": {
 								"SchemaName": "DW",
 								"TableName": "FactCovid19Metrics"
