@@ -1,0 +1,79 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "adf-wth-team2"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/dataflow_load_policy')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "wth-team2"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "DS_AzureSynapse",
+								"type": "DatasetReference"
+							},
+							"name": "StagePolicies"
+						},
+						{
+							"dataset": {
+								"referenceName": "DS_AzureSynapse",
+								"type": "DatasetReference"
+							},
+							"name": "DimPolicies"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "DS_AzureSynapse",
+								"type": "DatasetReference"
+							},
+							"name": "DimPoliciesDestination"
+						}
+					],
+					"transformations": [
+						{
+							"name": "CreatingHash"
+						},
+						{
+							"name": "Exists"
+						},
+						{
+							"name": "GrabAllColumns"
+						},
+						{
+							"name": "SelectingAllColumns"
+						},
+						{
+							"name": "AddingTimestamp"
+						},
+						{
+							"name": "AlterRow"
+						},
+						{
+							"name": "SurrogateKey"
+						}
+					],
+					"script": "source(output(\n\t\tISO_Country as string,\n\t\tCountryCode as string,\n\t\tCountryName as string,\n\t\tDate_Recorded as date,\n\t\tconfirmedcases as integer,\n\t\tconfirmeddeaths as integer,\n\t\tStringencyIndex as double,\n\t\tStringencyIndexForDisplay as double,\n\t\tc1_flag as boolean,\n\t\tschool_closing as integer,\n\t\tc2_flag as boolean,\n\t\tWorkplace_closing as integer,\n\t\tc3_flag as boolean,\n\t\tcancel_public_events as integer,\n\t\tc4_flag as boolean,\n\t\tc4_restrictions_on_gatherings as integer,\n\t\tc5_flag as boolean,\n\t\tc5_close_public_transport as integer,\n\t\tc6_flag as boolean,\n\t\tc6_stay_at_home_requirements as integer,\n\t\tc7_flag as boolean,\n\t\tc7_restrictions_on_internal_movement as integer,\n\t\tc8_international_travel_controls as integer,\n\t\te1_flag as boolean,\n\t\te1_income_support as integer,\n\t\t{e2_debt/contract_relief} as integer,\n\t\te3_fiscal_measures as integer,\n\t\te4_international_support as decimal(19,4),\n\t\th1_flag as boolean,\n\t\th1_public_information_campaigns as integer,\n\t\th2_testing_policy as integer,\n\t\th3_contact_tracing as integer,\n\t\th4_emergency_investment_in_healthcare as integer,\n\t\th5_investment_in_vaccines as integer\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table',\n\tstaged: false) ~> StagePolicies\nsource(output(\n\t\tPolicyID as integer,\n\t\tISO_Country as string,\n\t\tCountryCode as string,\n\t\tCountryName as string,\n\t\tDate_Recorded as date,\n\t\tconfirmedcases as integer,\n\t\tconfirmeddeaths as integer,\n\t\tStringencyIndex as double,\n\t\tStringencyIndexForDisplay as double,\n\t\tc1_flag as boolean,\n\t\tschool_closing as integer,\n\t\tc2_flag as boolean,\n\t\tWorkplace_closing as integer,\n\t\tc3_flag as boolean,\n\t\tcancel_public_events as integer,\n\t\tc4_flag as boolean,\n\t\tc4_restrictions_on_gatherings as integer,\n\t\tc5_flag as boolean,\n\t\tc5_close_public_transport as integer,\n\t\tc6_flag as boolean,\n\t\tc6_stay_at_home_requirements as integer,\n\t\tc7_flag as boolean,\n\t\tc7_restrictions_on_internal_movement as integer,\n\t\tc8_international_travel_controls as integer,\n\t\te1_flag as boolean,\n\t\te1_income_support as integer,\n\t\t{e2_debt/contract_relief} as integer,\n\t\te3_fiscal_measures as integer,\n\t\te4_international_support as decimal(19,4),\n\t\th1_flag as boolean,\n\t\th1_public_information_campaigns as integer,\n\t\th2_testing_policy as integer,\n\t\th3_contact_tracing as integer,\n\t\th4_emergency_investment_in_healthcare as integer,\n\t\th5_investment_in_vaccines as integer,\n\t\tHashValue as string,\n\t\tInsertedDate as timestamp,\n\t\tUpdatedDate as timestamp\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table',\n\tstaged: false) ~> DimPolicies\nSurrogateKey derive(HashValue = sha1(CountryCode+CountryName+toString(Date_Recorded))) ~> CreatingHash\nCreatingHash, DimPolicies exists(CreatingHash@HashValue == DimPolicies@HashValue,\n\tnegate:true,\n\tbroadcast: 'auto')~> Exists\nExists, DimPolicies lookup(concat(StagePolicies@CountryCode,'_',StagePolicies@CountryName,'_',toString(StagePolicies@Date_Recorded)) == concat(DimPolicies@CountryCode,'_',DimPolicies@CountryName,'_',toString(DimPolicies@Date_Recorded)),\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> GrabAllColumns\nAddingTimestamp select(mapColumn(\n\t\tPolicyID = NewPolicyID,\n\t\tISO_Country = StagePolicies@ISO_Country,\n\t\tCountryCode = StagePolicies@CountryCode,\n\t\tCountryName = StagePolicies@CountryName,\n\t\tDate_Recorded = StagePolicies@Date_Recorded,\n\t\tconfirmedcases = StagePolicies@confirmedcases,\n\t\tconfirmeddeaths = StagePolicies@confirmeddeaths,\n\t\tStringencyIndex = StagePolicies@StringencyIndex,\n\t\tStringencyIndexForDisplay = StagePolicies@StringencyIndexForDisplay,\n\t\tc1_flag = StagePolicies@c1_flag,\n\t\tschool_closing = StagePolicies@school_closing,\n\t\tc2_flag = StagePolicies@c2_flag,\n\t\tWorkplace_closing = StagePolicies@Workplace_closing,\n\t\tc3_flag = StagePolicies@c3_flag,\n\t\tcancel_public_events = StagePolicies@cancel_public_events,\n\t\tc4_flag = StagePolicies@c4_flag,\n\t\tc4_restrictions_on_gatherings = StagePolicies@c4_restrictions_on_gatherings,\n\t\tc5_flag = StagePolicies@c5_flag,\n\t\tc5_close_public_transport = StagePolicies@c5_close_public_transport,\n\t\tc6_flag = StagePolicies@c6_flag,\n\t\tc6_stay_at_home_requirements = StagePolicies@c6_stay_at_home_requirements,\n\t\tc7_flag = StagePolicies@c7_flag,\n\t\tc7_restrictions_on_internal_movement = StagePolicies@c7_restrictions_on_internal_movement,\n\t\tc8_international_travel_controls = StagePolicies@c8_international_travel_controls,\n\t\te1_flag = StagePolicies@e1_flag,\n\t\te1_income_support = StagePolicies@e1_income_support,\n\t\te3_fiscal_measures = StagePolicies@e3_fiscal_measures,\n\t\te4_international_support = StagePolicies@e4_international_support,\n\t\th1_flag = StagePolicies@h1_flag,\n\t\th1_public_information_campaigns = StagePolicies@h1_public_information_campaigns,\n\t\th2_testing_policy = StagePolicies@h2_testing_policy,\n\t\th3_contact_tracing = StagePolicies@h3_contact_tracing,\n\t\th4_emergency_investment_in_healthcare = StagePolicies@h4_emergency_investment_in_healthcare,\n\t\th5_investment_in_vaccines = StagePolicies@h5_investment_in_vaccines\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectingAllColumns\nGrabAllColumns derive(inserted_date = iif(isNull(InsertedDate),fromUTC(currentTimestamp(),'PST'),InsertedDate),\n\t\tupdated_date = iif(isNull(UpdatedDate),fromUTC(currentTimestamp(),'PST'),UpdatedDate)) ~> AddingTimestamp\nSelectingAllColumns alterRow(upsertIf(true())) ~> AlterRow\nStagePolicies keyGenerate(output(NewPolicyID as long),\n\tstartAt: 1L) ~> SurrogateKey\nAlterRow sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:false,\n\tupdateable:false,\n\tupsertable:true,\n\tkeys:['PolicyID'],\n\tformat: 'table',\n\tstaged: true,\n\tallowCopyCommand: true,\n\tmapColumn(\n\t\tISO_Country,\n\t\tCountryCode,\n\t\tCountryName,\n\t\tDate_Recorded,\n\t\tconfirmedcases,\n\t\tconfirmeddeaths,\n\t\tStringencyIndex,\n\t\tStringencyIndexForDisplay,\n\t\tc1_flag,\n\t\tschool_closing,\n\t\tc2_flag,\n\t\tWorkplace_closing,\n\t\tc3_flag,\n\t\tcancel_public_events,\n\t\tc4_flag,\n\t\tc4_restrictions_on_gatherings,\n\t\tc5_flag,\n\t\tc5_close_public_transport,\n\t\tc6_flag,\n\t\tc6_stay_at_home_requirements,\n\t\tc7_flag,\n\t\tc7_restrictions_on_internal_movement,\n\t\tc8_international_travel_controls,\n\t\te1_flag,\n\t\te1_income_support,\n\t\te3_fiscal_measures,\n\t\te4_international_support,\n\t\th1_flag,\n\t\th1_public_information_campaigns,\n\t\th2_testing_policy,\n\t\th3_contact_tracing,\n\t\th4_emergency_investment_in_healthcare,\n\t\th5_investment_in_vaccines,\n\t\tPolicyID\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> DimPoliciesDestination"
+				}
+			},
+			"dependsOn": []
+		}
+	]
+}
