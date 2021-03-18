@@ -1,5 +1,5 @@
 {
-	"name": "dataflow_load_dimension",
+	"name": "dataflow_load_country",
 	"properties": {
 		"folder": {
 			"name": "wth-team2"
