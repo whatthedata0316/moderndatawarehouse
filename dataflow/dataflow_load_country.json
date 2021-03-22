@@ -1,0 +1,57 @@
+{
+	"name": "dataflow_load_country",
+	"properties": {
+		"folder": {
+			"name": "wth-team2"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "DS_AzureSynapse",
+						"type": "DatasetReference"
+					},
+					"name": "StageCountry"
+				},
+				{
+					"dataset": {
+						"referenceName": "DS_AzureSynapse",
+						"type": "DatasetReference"
+					},
+					"name": "DimCountry"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "DS_AzureSynapse",
+						"type": "DatasetReference"
+					},
+					"name": "DimCountryDestination"
+				}
+			],
+			"transformations": [
+				{
+					"name": "CreatingHash"
+				},
+				{
+					"name": "Exists"
+				},
+				{
+					"name": "GrabAllColumns"
+				},
+				{
+					"name": "SelectingAllColumns"
+				},
+				{
+					"name": "AddingTimestamp"
+				},
+				{
+					"name": "AlterRow"
+				}
+			],
+			"script": "source(output(\n\t\tCountryCode as string,\n\t\tCountry as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table',\n\tstaged: false) ~> StageCountry\nsource(output(\n\t\tCountryCode as string,\n\t\tCountry as string,\n\t\tHashValue as string,\n\t\tInsertedDate as timestamp,\n\t\tUpdatedDate as timestamp\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table',\n\tstaged: false) ~> DimCountry\nStageCountry derive(HashValue = sha1(Country)) ~> CreatingHash\nCreatingHash, DimCountry exists(CreatingHash@HashValue == DimCountry@HashValue,\n\tnegate:true,\n\tbroadcast: 'auto')~> Exists\nExists, DimCountry lookup(StageCountry@Country == DimCountry@Country,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> GrabAllColumns\nAddingTimestamp select(mapColumn(\n\t\tCountry = StageCountry@Country,\n\t\tCountryCode = StageCountry@CountryCode,\n\t\tHashValue = CreatingHash@HashValue,\n\t\tInsertedDate = inserted_date,\n\t\tUpdatedDate = updated_date\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectingAllColumns\nGrabAllColumns derive(inserted_date = iif(isNull(InsertedDate),fromUTC(currentTimestamp(),'PST'),InsertedDate),\n\t\tupdated_date = iif(isNull(UpdatedDate),fromUTC(currentTimestamp(),'PST'),UpdatedDate)) ~> AddingTimestamp\nSelectingAllColumns alterRow(upsertIf(true())) ~> AlterRow\nAlterRow sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:false,\n\tupdateable:false,\n\tupsertable:true,\n\tkeys:['Country'],\n\tformat: 'table',\n\tstaged: true,\n\tallowCopyCommand: true,\n\tmapColumn(\n\t\tCountry,\n\t\tCountryCode,\n\t\tHashValue,\n\t\tInsertedDate,\n\t\tUpdatedDate\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> DimCountryDestination"
+		}
+	}
+}
